@@ -1,0 +1,36 @@
+type User @table {
+  username: String!
+  createdAt: Timestamp!
+  email: String
+  profilePictureUrl: String
+}
+
+type POI @table {
+  name: String!
+  latitude: Float!
+  longitude: Float!
+  address: String!
+  createdAt: Timestamp!
+  description: String
+  phone: String
+  website: String
+  openingHours: String
+  imageUrl: String
+}
+
+type Category @table {
+  name: String!
+}
+
+type Review @table {
+  user: User!
+  poi: POI!
+  rating: Int!
+  createdAt: Timestamp!
+  comment: String
+}
+
+type POICategory @table(key: ["poi", "category"]) {
+  poi: POI!
+  category: Category!
+}

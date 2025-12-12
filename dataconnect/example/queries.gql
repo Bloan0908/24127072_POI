@@ -1,0 +1,82 @@
+mutation AddNewPOI(
+  $address: String!
+  $createdAt: Timestamp!
+  $description: String
+  $imageUrl: String
+  $latitude: Float!
+  $longitude: Float!
+  $name: String!
+  $openingHours: String
+  $phone: String
+  $website: String
+) @auth(level: USER) {
+  pOI_insert(
+    data: {
+      address: $address
+      createdAt: $createdAt
+      description: $description
+      imageUrl: $imageUrl
+      latitude: $latitude
+      longitude: $longitude
+      name: $name
+      openingHours: $openingHours
+      phone: $phone
+      website: $website
+    }
+  )
+}
+
+query GetPOI($id: UUID!) @auth(level: PUBLIC, insecureReason: "This query is safe to expose to the public") {
+  pOI(id: $id) {
+    id
+    address
+    createdAt
+    description
+    imageUrl
+    latitude
+    longitude
+    name
+    openingHours
+    phone
+    website
+  }
+}
+
+mutation UpdatePOI(
+  $id: UUID!
+  $address: String
+  $createdAt: Timestamp
+  $description: String
+  $imageUrl: String
+  $latitude: Float
+  $longitude: Float
+  $name: String
+  $openingHours: String
+  $phone: String
+  $website: String
+) @auth(level: USER) {
+  pOI_update(
+    id: $id
+    data: {
+      address: $address
+      createdAt: $createdAt
+      description: $description
+      imageUrl: $imageUrl
+      latitude: $latitude
+      longitude: $longitude
+      name: $name
+      openingHours: $openingHours
+      phone: $phone
+      website: $website
+    }
+  )
+}
+
+query ListPOIs @auth(level: PUBLIC, insecureReason: "This query is safe to expose to the public") {
+  pOIS {
+    id
+    name
+    latitude
+    longitude
+  }
+}
