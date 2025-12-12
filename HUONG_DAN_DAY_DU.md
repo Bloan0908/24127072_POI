@@ -5,7 +5,7 @@
 **Tech Stack:**
 - **Frontend:** React + TypeScript + Vite + Leaflet (bản đồ)
 - **Backend:** Python FastAPI + HuggingFace + OpenStreetMap
-- **Deploy:** Firebase Hosting (Frontend) + Ngrok (Backend)
+- **Deploy:** Firebase Hosting (Frontend) + Render.com (Backend) hoặc Ngrok
 - **Authentication:** Firebase Auth
 - **Database:** Firebase Data Connect
 
@@ -873,40 +873,255 @@ ngrok http 8081
 
 ## 🎯 Checklist hoàn thành
 
+### Setup & Development
 - [ ] Python virtual environment đã tạo
 - [ ] Backend dependencies đã cài (`pip install -r requirements.txt`)
 - [ ] File `.env` đã tạo với tokens
 - [ ] Backend chạy được local (`python main.py`)
 - [ ] Test API qua Swagger UI (`/docs`)
-- [ ] Ngrok tạo được public URL
 - [ ] Frontend có file `apiService.ts`
 - [ ] `App.tsx` đã import từ `apiService`
-- [ ] Frontend gọi được backend qua ngrok
 - [ ] Test tìm kiếm địa điểm thành công
+
+### Deploy (Chọn 1 trong 2)
+
+**Option 1: Ngrok (Development)**
+- [ ] Ngrok tạo được public URL
+- [ ] Frontend gọi được backend qua ngrok
+- [ ] Website hoạt động (khi máy bật)
+
+**Option 2: Render (Production - Khuyến nghị)**
+- [ ] Code đã push lên GitHub
+- [ ] Deploy backend lên Render thành công
+- [ ] Lấy được Render URL cố định
+- [ ] Cập nhật `apiService.ts` với Render URL
 - [ ] Build frontend thành công (`npm run build`)
 - [ ] Deploy lên Firebase thành công
-- [ ] Website hoạt động trên internet
+- [ ] Website hoạt động 24/7 (không cần máy bật)
 
 ---
 
-## 🚀 Nâng cấp (Optional)
+## 🚀 PHẦN 5: Deploy Backend lên Render.com (URL cố định, chạy 24/7)
 
-### Deploy backend lên Render (Miễn phí, URL cố định)
+### **Tại sao cần deploy lên Render?**
 
-1. Push code backend lên GitHub
-2. Vào Render.com → New Web Service
-3. Connect GitHub repo
-4. Cấu hình:
-   - Build Command: `pip install -r requirements.txt`
-   - Start Command: `python main.py`
-5. Thêm Environment Variables (HuggingFace token)
-6. Deploy → Lấy URL cố định
+- ❌ **Ngrok:** URL thay đổi mỗi lần restart, cần máy bật
+- ✅ **Render:** URL cố định, backend chạy 24/7, tắt máy vẫn hoạt động
+
+---
+
+### **Bước 1: Chuẩn bị files**
+
+#### 1.1. Tạo file `.gitignore` trong thư mục `backend`
+
+```
+venv/
+__pycache__/
+.env
+*.pyc
+.DS_Store
+```
+
+#### 1.2. Kiểm tra `requirements.txt` có `gunicorn`
+
+File `backend/requirements.txt` phải có:
+```
+fastapi
+uvicorn[standard]
+python-dotenv
+requests
+pyngrok
+geopy
+nominatim
+gunicorn
+```
+
+#### 1.3. Tạo file `runtime.txt` (nếu cần chỉ định Python version)
+
+Tạo file `backend/runtime.txt`:
+```
+python-3.11.0
+```
+
+---
+
+### **Bước 2: Push code lên GitHub**
+
+```powershell
+# Di chuyển về thư mục gốc dự án
+cd "E:\UNIVERSITY\Năm 2\1\TDTT\src\khám-phá-địa-điểm-việt-nam"
+
+# Khởi tạo git (nếu chưa có)
+git init
+
+# Add tất cả files
+git add .
+
+# Commit
+git commit -m "Add backend for Render deployment"
+
+# Kết nối với GitHub repo
+git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
+
+# Push code lên
+git branch -M main
+git push -u origin main
+```
+
+---
+
+### **Bước 3: Deploy lên Render.com**
+
+#### 3.1. Đăng ký/Đăng nhập Render
+
+1. Vào https://render.com
+2. Click **"Get Started"** hoặc **"Sign Up"**
+3. Chọn **"Sign in with GitHub"** (dễ nhất)
+4. Cho phép Render truy cập GitHub
+
+#### 3.2. Tạo Web Service mới
+
+1. Sau khi đăng nhập → Click **"New +"** (góc trên bên phải)
+2. Chọn **"Web Service"**
+3. Tìm repository của bạn trong danh sách (VD: `24127072_POI`)
+4. Click **"Connect"**
+
+#### 3.3. Cấu hình Web Service
+
+Điền các thông tin sau:
+
+| Field | Value |
+|-------|-------|
+| **Name** | `vietnam-discovery-api` (hoặc tên bạn thích) |
+| **Region** | `Singapore` (gần Việt Nam nhất) |
+| **Branch** | `main` |
+| **Root Directory** | `backend` ⚠️ **QUAN TRỌNG!** |
+| **Runtime** | `Python 3` |
+| **Build Command** | `pip install -r requirements.txt` |
+| **Start Command** | `uvicorn main:app --host 0.0.0.0 --port $PORT` |
+| **Instance Type** | `Free` ✅ |
+
+#### 3.4. Thêm Environment Variables
+
+Scroll xuống phần **"Environment Variables"**, click **"Add Environment Variable"**:
+
+- **Key:** `HUGGINGFACE_TOKEN`
+- **Value:** `your_huggingface_token_here`
+
+Click **"Add"**
+
+#### 3.5. Deploy
+
+Click **"Create Web Service"** ở cuối trang.
+
+Render sẽ bắt đầu build và deploy (~3-5 phút). Bạn sẽ thấy logs đang chạy.
+
+**Chờ đến khi thấy:**
+```
+✅ Live at https://vietnam-discovery-api.onrender.com
+```
+
+**Copy URL này!**
+
+---
+
+### **Bước 4: Cập nhật Frontend**
+
+#### 4.1. Sửa file `services/apiService.ts`
+
+Thay đổi dòng `API_URL`:
+
+```typescript
+// CŨ:
+const API_URL = import.meta.env.VITE_API_URL || "https://divina-subcultrated-superintensely.ngrok-free.dev";
+
+// MỚI:
+const API_URL = import.meta.env.VITE_API_URL || "https://vietnam-discovery-api.onrender.com";
+```
+
+*(Thay bằng URL Render của bạn)*
+
+#### 4.2. Build lại Frontend
+
+```powershell
+npm run build
+```
+
+#### 4.3. Deploy lại lên Firebase
+
+```powershell
+firebase deploy
+```
+
+hoặc:
+
+```powershell
+npx firebase deploy
+```
+
+---
+
+### **Bước 5: Test Website**
+
+1. Mở website Firebase của bạn
+2. Tìm kiếm địa điểm (VD: "Hà Nội")
+3. Kiểm tra có hiện bản đồ và 5 địa điểm không
+
+**✅ Hoàn thành!** Website giờ chạy 24/7, không cần máy bạn bật.
+
+---
+
+### **⚠️ Lưu ý về Render Free Tier:**
+
+**Giới hạn:**
+- Backend sẽ "ngủ" sau **15 phút** không có request
+- Lần đầu truy cập sau khi ngủ sẽ chậm ~30 giây (đánh thức backend)
+- Giới hạn: **750 giờ/tháng** (đủ dùng cho học tập)
+
+**Giải pháp:**
+- Nâng cấp Render Paid ($7/tháng): Backend không ngủ, nhanh hơn
+- Hoặc dùng cron job để ping backend 10 phút/lần (giữ backend thức)
+
+---
+
+### **Bước 6: (Optional) Giữ Render Backend không ngủ**
+
+Tạo cron job miễn phí để ping backend mỗi 10 phút:
+
+1. Vào https://cron-job.org/en/
+2. Đăng ký tài khoản
+3. Tạo cronjob mới:
+   - URL: `https://vietnam-discovery-api.onrender.com/health`
+   - Interval: Every 10 minutes
+4. Save
+
+Backend giờ sẽ luôn thức! 🚀
+
+---
+
+## 🔄 So sánh Ngrok vs Render
+
+| Tiêu chí | Ngrok | Render |
+|----------|-------|--------|
+| **URL** | Thay đổi mỗi lần restart | Cố định |
+| **Uptime** | Cần máy bật | 24/7 |
+| **Speed** | Nhanh | Hơi chậm khi "thức dậy" |
+| **Setup** | Đơn giản | Cần push GitHub |
+| **Free Tier** | Unlimited | 750 giờ/tháng |
+| **Dùng cho** | Development/Test | Production |
+
+---
 
 ### Sử dụng biến môi trường trong Frontend
 
 Tạo file `.env` trong thư mục gốc:
 ```env
-VITE_API_URL=https://your-backend-url.com
+VITE_API_URL=https://vietnam-discovery-api.onrender.com
+```
+
+Sau đó trong `apiService.ts`:
+```typescript
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 ```
 
 ---

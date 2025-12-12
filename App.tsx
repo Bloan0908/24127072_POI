@@ -147,7 +147,7 @@ export default function App() {
               <div className="flex flex-col items-center justify-center text-center p-4 bg-green-50 rounded-lg">
                 <Spinner />
                 <p className="text-green-600 mt-2 font-semibold">Đang tìm kiếm "{searchedLocation}"...</p>
-                <p className="text-green-500 text-sm">Gemini đang tìm tọa độ, địa điểm và thời tiết.</p>
+                <p className="text-green-500 text-sm">Đang tìm tọa độ, địa điểm và thời tiết...</p>
               </div>
             )}
 

@@ -7,7 +7,7 @@ import type { Coordinates, PointOfInterest, WeatherInfo } from '../types';
 
 // URL của Backend API
 // Ngrok URL - Cập nhật URL này mỗi khi restart ngrok
-const API_URL = import.meta.env.VITE_API_URL || "https://divina-subcultrated-superintensely.ngrok-free.dev";
+const API_URL = import.meta.env.VITE_API_URL || "https://vietnam-discovery-api.onrender.com";
 
 /**
  * Lấy tọa độ (lat, lng) của một địa điểm tại Việt Nam
