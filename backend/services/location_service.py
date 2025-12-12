@@ -119,19 +119,67 @@ class LocationService:
     
     
     def _generate_description(self, tags: dict) -> str:
-        """Tạo mô tả từ OSM tags"""
+        """Tạo mô tả chi tiết từ OSM tags"""
         tourism = tags.get("tourism", "")
         historic = tags.get("historic", "")
         natural = tags.get("natural", "")
+        amenity = tags.get("amenity", "")
+        building = tags.get("building", "")
         
-        if tourism:
-            return f"Điểm du lịch: {tourism}"
-        elif historic:
-            return f"Di tích lịch sử: {historic}"
-        elif natural:
-            return f"Kỳ quan thiên nhiên: {natural}"
+        # Lấy thông tin bổ sung
+        wikipedia = tags.get("wikipedia", "")
+        wikidata = tags.get("wikidata", "")
+        description = tags.get("description", "")
+        
+        # Tạo mô tả dựa trên loại địa điểm
+        base_desc = ""
+        
+        if tourism == "attraction":
+            base_desc = "Điểm tham quan du lịch nổi tiếng"
+        elif tourism == "museum":
+            base_desc = "Bảo tàng lưu giữ di sản văn hóa và lịch sử"
+        elif tourism == "viewpoint":
+            base_desc = "Điểm ngắm cảnh đẹp, view panorama tuyệt vời"
+        elif tourism == "artwork":
+            base_desc = "Tác phẩm nghệ thuật công cộng, điểm check-in độc đáo"
+        elif tourism == "gallery":
+            base_desc = "Phòng tranh nghệ thuật, triển lãm đa dạng"
+        elif historic == "memorial":
+            base_desc = "Đài tưởng niệm lịch sử, nơi tôn vinh các anh hùng dân tộc"
+        elif historic == "monument":
+            base_desc = "Di tích lịch sử quan trọng, kiến trúc đặc sắc"
+        elif historic == "archaeological_site":
+            base_desc = "Khu di tích khảo cổ học, dấu tích văn minh cổ đại"
+        elif historic == "castle":
+            base_desc = "Lâu đài cổ kính, kiến trúc thời phong kiến"
+        elif historic == "ruins":
+            base_desc = "Tàn tích lịch sử, dấu vết của thời gian"
+        elif natural == "beach":
+            base_desc = "Bãi biển đẹp, cát trắng nước trong, lý tưởng để nghỉ dưỡng"
+        elif natural == "cave":
+            base_desc = "Hang động tự nhiên, khám phá thạch nhũ kỳ thú"
+        elif natural == "peak":
+            base_desc = "Đỉnh núi hùng vĩ, chinh phục và ngắm cảnh từ trên cao"
+        elif natural == "waterfall":
+            base_desc = "Thác nước hùng vĩ, khung cảnh thiên nhiên tuyệt đẹp"
+        elif amenity == "place_of_worship":
+            base_desc = "Nơi thờ cúng tâm linh, kiến trúc tôn giáo độc đáo"
         else:
-            return "Địa điểm thú vị đáng khám phá"
+            # Fallback description
+            if tourism:
+                base_desc = f"Địa điểm du lịch thú vị - {tourism}"
+            elif historic:
+                base_desc = f"Di tích lịch sử - {historic}"
+            elif natural:
+                base_desc = f"Kỳ quan thiên nhiên - {natural}"
+            else:
+                base_desc = "Địa điểm đáng khám phá tại Việt Nam"
+        
+        # Thêm thông tin từ description tag nếu có
+        if description:
+            base_desc += f". {description}"
+        
+        return base_desc
     
     
     def _get_fallback_pois(self, lat: float, lng: float) -> List[Dict]:
