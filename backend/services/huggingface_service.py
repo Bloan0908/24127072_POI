@@ -13,6 +13,7 @@ class HuggingFaceService:
     def __init__(self):
         """Khởi tạo HuggingFace Service"""
         self.api_token = os.getenv("HUGGINGFACE_TOKEN")
+        # API endpoint mới từ HuggingFace (2024+)
         self.api_base = "https://api-inference.huggingface.co/models"
         
         # Các model sử dụng (miễn phí, không cần token cho inference API)
@@ -44,27 +45,44 @@ class HuggingFaceService:
             
             # Gọi HuggingFace Inference API
             url = f"{self.api_base}/{model}"
-            headers = {}
+            headers = {"Content-Type": "application/json"}
             if self.api_token:
                 headers["Authorization"] = f"Bearer {self.api_token}"
             
             payload = {"inputs": text}
             
-            response = requests.post(url, headers=headers, json=payload, timeout=30)
-            response.raise_for_status()
+            print(f"Calling HuggingFace API: {url}")
+            print(f"Payload: {payload}")
+            
+            response = requests.post(url, headers=headers, json=payload, timeout=60)
+            
+            print(f"Response status: {response.status_code}")
+            print(f"Response body: {response.text}")
+            
+            # Kiểm tra lỗi API endpoint deprecated
+            if response.status_code >= 400:
+                error_text = response.text
+                if "no longer supported" in error_text or "router.huggingface.co" in error_text:
+                    raise Exception("HuggingFace API endpoint đã thay đổi. Cần cập nhật code.")
+                response.raise_for_status()
             
             result = response.json()
             
             # Parse kết quả
             if isinstance(result, list) and len(result) > 0:
-                translated_text = result[0].get("translation_text", text)
-                return translated_text
+                translated_text = result[0].get("translation_text", "")
+                if translated_text:
+                    print(f"Translation successful: {translated_text}")
+                    return translated_text
             
-            return text  # Trả về văn bản gốc nếu không dịch được
+            # Nếu không có kết quả, raise error thay vì trả về text gốc
+            print(f"No translation result from API: {result}")
+            raise Exception("Model không trả về kết quả dịch")
             
         except Exception as e:
             print(f"Translation error: {e}")
-            return text  # Trả về văn bản gốc nếu lỗi
+            # Raise error để frontend biết có lỗi
+            raise Exception(f"Lỗi dịch thuật: {str(e)}")
     
     
     async def get_location_info(self, location_name: str) -> dict:

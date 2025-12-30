@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { translateToVietnamese } from '../services/geminiService';
+import { translateText } from '../services/apiService';
 
 export const TranslationWidget: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,10 +17,18 @@ export const TranslationWidget: React.FC = () => {
     setTranslatedText('');
 
     try {
-      const result = await translateToVietnamese(inputText);
-      setTranslatedText(result);
-    } catch (err) {
-      setError('Lỗi dịch thuật. Vui lòng thử lại.');
+      const result = await translateText(inputText, 'en', 'vi');
+      
+      // Kiểm tra xem có thực sự dịch được không (nếu kết quả giống text gốc)
+      if (result === inputText) {
+        setError('Backend không thể dịch văn bản. Model HuggingFace có thể đang loading hoặc lỗi.');
+        setTranslatedText('');
+      } else {
+        setTranslatedText(result);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Lỗi dịch thuật. Vui lòng thử lại.');
+      console.error('Translation error:', err);
     } finally {
       setIsLoading(false);
     }

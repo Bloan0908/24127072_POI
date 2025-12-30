@@ -165,6 +165,9 @@ export async function translateText(
   targetLang: string = 'vi'
 ): Promise<string> {
   try {
+    console.log(`Translating from ${sourceLang} to ${targetLang}:`, text);
+    console.log('API URL:', `${API_URL}/api/translate`);
+    
     const response = await fetch(`${API_URL}/api/translate`, {
       method: 'POST',
       headers: {
@@ -178,16 +181,28 @@ export async function translateText(
     });
 
     if (!response.ok) {
-      console.warn('Translation failed, returning original text');
-      return text; // Trả về text gốc nếu dịch thất bại
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Translation API error:', response.status, errorData);
+      throw new Error(errorData.detail || 'Không thể dịch văn bản. Vui lòng kiểm tra backend API.');
     }
 
     const data = await response.json();
-    return data.translated_text || text;
+    console.log('Translation result:', data);
+    
+    if (!data.translated_text) {
+      throw new Error('Backend không trả về kết quả dịch');
+    }
+    
+    return data.translated_text;
 
   } catch (error) {
-    console.warn("Translation error (non-critical):", error);
-    return text; // Trả về text gốc nếu lỗi
+    console.error("Translation error:", error);
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new Error('Không thể kết nối tới backend API. Vui lòng kiểm tra backend đang chạy.');
+    }
+    
+    throw error;
   }
 }
 
