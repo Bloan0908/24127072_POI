@@ -5,6 +5,8 @@ requests
 pyngrok
 transformers
 huggingface_hub
+torch
+sentencepiece
 geopy
 nominatim
 gunicorn
