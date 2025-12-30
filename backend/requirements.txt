@@ -4,6 +4,7 @@ python-dotenv
 requests
 pyngrok
 transformers
+huggingface_hub
 geopy
 nominatim
 gunicorn

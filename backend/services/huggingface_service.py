@@ -6,17 +6,18 @@ HuggingFace Service - Sử dụng các model HuggingFace cho:
 
 import os
 from typing import Optional
-import requests
+from huggingface_hub import InferenceClient
 
 
 class HuggingFaceService:
     def __init__(self):
         """Khởi tạo HuggingFace Service"""
         self.api_token = os.getenv("HUGGINGFACE_TOKEN")
-        # API endpoint mới từ HuggingFace (2024+)
-        self.api_base = "https://api-inference.huggingface.co/models"
         
-        # Các model sử dụng (miễn phí, không cần token cho inference API)
+        # Khởi tạo Inference Client với token
+        self.client = InferenceClient(token=self.api_token)
+        
+        # Các model sử dụng
         self.translation_model = "Helsinki-NLP/opus-mt-en-vi"  # Dịch Anh -> Việt
         self.translation_model_vi_en = "Helsinki-NLP/opus-mt-vi-en"  # Dịch Việt -> Anh
         
@@ -43,41 +44,26 @@ class HuggingFaceService:
                 # Mặc định dịch sang tiếng Việt
                 model = self.translation_model
             
-            # Gọi HuggingFace Inference API
-            url = f"{self.api_base}/{model}"
-            headers = {"Content-Type": "application/json"}
-            if self.api_token:
-                headers["Authorization"] = f"Bearer {self.api_token}"
+            print(f"Translating text with model: {model}")
+            print(f"Input text: {text}")
             
-            payload = {"inputs": text}
+            # Dùng InferenceClient để gọi model translation
+            result = self.client.translation(
+                text=text,
+                model=model
+            )
             
-            print(f"Calling HuggingFace API: {url}")
-            print(f"Payload: {payload}")
+            print(f"Translation result: {result}")
             
-            response = requests.post(url, headers=headers, json=payload, timeout=60)
-            
-            print(f"Response status: {response.status_code}")
-            print(f"Response body: {response.text}")
-            
-            # Kiểm tra lỗi API endpoint deprecated
-            if response.status_code >= 400:
-                error_text = response.text
-                if "no longer supported" in error_text or "router.huggingface.co" in error_text:
-                    raise Exception("HuggingFace API endpoint đã thay đổi. Cần cập nhật code.")
-                response.raise_for_status()
-            
-            result = response.json()
-            
-            # Parse kết quả
-            if isinstance(result, list) and len(result) > 0:
-                translated_text = result[0].get("translation_text", "")
-                if translated_text:
-                    print(f"Translation successful: {translated_text}")
-                    return translated_text
-            
-            # Nếu không có kết quả, raise error thay vì trả về text gốc
-            print(f"No translation result from API: {result}")
-            raise Exception("Model không trả về kết quả dịch")
+            # Lấy text đã dịch
+            if result and hasattr(result, 'translation_text'):
+                return result.translation_text
+            elif isinstance(result, dict) and 'translation_text' in result:
+                return result['translation_text']
+            elif isinstance(result, str):
+                return result
+            else:
+                raise Exception(f"Unexpected result format: {result}")
             
         except Exception as e:
             print(f"Translation error: {e}")
